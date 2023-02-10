@@ -1,7 +1,7 @@
 import { FetchResponse } from '@openmrs/esm-framework';
 export interface SearchedPatient {
   uuid: string;
-  identifiers: Array<{ identifier: string }>;
+  identifiers: Array<Identifier>;
   person: {
     addresses: Array<Address>;
     age: number;
@@ -26,6 +26,12 @@ export interface Address {
   postalCode: string;
   stateProvince: string;
 }
+
+export interface Identifier {
+  identifier: string;
+  identifierTypeOrientation: 'external' | 'external-preferred' | 'internal';
+}
+
 export interface FHIRPatientType {
   id: string;
   identifier: Array<{
@@ -109,3 +115,14 @@ export interface AdvancedPatientSearchAction {
   postcode?: string;
   age?: number;
 }
+
+export interface MPIConfig {
+  baseAPIPath: string;
+  preferredPatientIdentifierTitle: string;
+  preferredPatientIdentifierType: string;
+  primaryOmrsIdentifierType: string;
+  disableSearch: boolean;
+  title: string;
+}
+
+export type SearchMode = 'External' | 'Internal';

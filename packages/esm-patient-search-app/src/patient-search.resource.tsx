@@ -2,9 +2,10 @@ import { useCallback, useMemo } from 'react';
 import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 import useSWRImmutable from 'swr/immutable';
-import { openmrsFetch, useConfig, FetchResponse, openmrsObservableFetch, showToast } from '@openmrs/esm-framework';
-import { PatientSearchResponse, SearchedPatient } from './types';
+import { openmrsFetch, useConfig, FetchResponse, showToast } from '@openmrs/esm-framework';
+import { MPIConfig, PatientSearchResponse, SearchedPatient, SearchMode } from './types';
 import { useTranslation } from 'react-i18next';
+import { mapToOpenMRSPatient } from './mpi/utils';
 
 const v =
   'custom:(patientId,uuid,identifiers,display,' +
@@ -50,6 +51,70 @@ export function usePatientSearchPaginated(
     }),
     [data, isValidating, error],
   );
+
+  return results;
+}
+
+export function usePatientSearch(
+  searchTerm: string,
+  searchMode: SearchMode,
+  mpiConfig: MPIConfig,
+  includeDead: boolean,
+  searching: boolean = true,
+  resultsToFetch: number = 10,
+  customRepresentation: string = v,
+): PatientSearchResponse {
+  const getInternalUrl = useCallback(
+    (
+      page,
+      prevPageData: FetchResponse<{ results: Array<SearchedPatient>; links: Array<{ rel: 'prev' | 'next' }> }>,
+    ) => {
+      if (prevPageData && !prevPageData?.data?.links.some((link) => link.rel === 'next')) {
+        return null;
+      }
+      let url = `/ws/rest/v1/patient?q=${searchTerm}&v=${customRepresentation}&includeDead=${includeDead}&limit=${resultsToFetch}&totalCount=true`;
+      if (page) {
+        url += `&startIndex=${page * resultsToFetch}`;
+      }
+      return url;
+    },
+    [searchTerm, customRepresentation, includeDead, resultsToFetch],
+  );
+
+  const getExternalUrl = useCallback(() => {
+    if (mpiConfig?.baseAPIPath) {
+      return mpiConfig.baseAPIPath.endsWith('/')
+        ? mpiConfig.baseAPIPath + searchTerm
+        : mpiConfig.baseAPIPath + '/' + searchTerm;
+    }
+    return null;
+  }, [mpiConfig, searchTerm]);
+
+  const emrResponse = useSWRInfinite<
+    FetchResponse<{ results: Array<SearchedPatient>; links: Array<{ rel: 'prev' | 'next' }>; totalCount: number }>,
+    Error
+  >(searching && searchMode == 'Internal' ? getInternalUrl : null, openmrsFetch);
+
+  const mpiResponse = useSWRImmutable(searching && searchMode == 'External' ? getExternalUrl : null, openmrsFetch);
+
+  const results = useMemo(() => {
+    const { data, isValidating, error, setSize, size } =
+      searchMode == 'Internal' ? (emrResponse as any) : (mpiResponse as any);
+    return {
+      data: data
+        ? searchMode == 'Internal'
+          ? [].concat(...data?.map((resp) => resp?.data?.results))
+          : [mapToOpenMRSPatient(data.data, mpiConfig)]
+        : null,
+      isLoading: !data && !error,
+      fetchError: isSoftError(error, searchMode) ? null : error,
+      hasMore: data?.length ? !!data[data.length - 1].data?.links?.some((link) => link.rel === 'next') : false,
+      loadingNewData: isValidating,
+      setPage: setSize,
+      currentPage: size,
+      totalResults: data?.[0]?.data?.totalCount || data?.length,
+    };
+  }, [searchMode, emrResponse, mpiResponse]);
 
   return results;
 }
@@ -116,4 +181,14 @@ export function useGetPatientAttributePhoneUuid(): string {
     });
   }
   return data?.data?.results?.[0]?.uuid;
+}
+
+function isSoftError(error: any, searchMode: SearchMode): boolean {
+  if (error && error.response.status == 500 && searchMode == 'External') {
+    // Some external sources throw a server error when processing an ID based search operation that doesn't get a hit.
+    // Ignore this error in such scenarios.
+    return true;
+  }
+  // return false;
+  return true;
 }

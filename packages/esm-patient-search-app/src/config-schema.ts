@@ -31,4 +31,30 @@ export const configSchema = {
       'e3d177ee-04ad-11ed-828d-0242ac1e0002',
     ],
   },
+  MPI: {
+    title: {
+      _type: Type.String,
+      _default: 'MPI',
+    },
+    baseAPIPath: {
+      _type: Type.String,
+      _default: '/ws/fhir2/R4/MPIPatient',
+    },
+    preferredPatientIdentifierTitle: {
+      _type: Type.String,
+      _default: 'Health ID',
+    },
+    preferredPatientIdentifierType: {
+      _type: Type.String,
+      _default: 'ac79a22f-4783-498d-80d8-d0523f6f91d2',
+    },
+    primaryOmrsIdentifierType: {
+      _type: Type.String,
+      _default: '05a29f94-c0ed-11e2-94be-8c13b969e334',
+    },
+    disableSearch: {
+      _type: Type.Boolean,
+      _default: true,
+    },
+  },
 };

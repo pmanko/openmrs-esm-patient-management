@@ -1,6 +1,6 @@
 import React, { useCallback, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ContentSwitcher, Switch, TextInput, DatePicker, DatePickerInput, Button, NumberInput } from '@carbon/react';
+import { ContentSwitcher, Switch, TextInput, Button, NumberInput, RadioButton, RadioButtonGroup } from '@carbon/react';
 import { ChevronUp, ChevronDown } from '@carbon/react/icons';
 import styles from './refine-search.scss';
 import reducer, { initialState } from './advanced-search-reducer';

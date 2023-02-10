@@ -69,6 +69,12 @@ export interface RegistrationConfig {
     encounterProviderRoleUuid: string;
     registrationFormUuid: string | null;
   };
+  MPI: {
+    baseAPIPath: string;
+    preferredPatientIdentifierTitle: string;
+    preferredPatientIdentifierType: string;
+    title: string;
+  };
 }
 
 export const builtInSections: Array<SectionDefinition> = [
@@ -304,6 +310,24 @@ export const esmPatientRegistrationSchema = {
     patientPhotoUuid: {
       _type: Type.ConceptUuid,
       _default: '736e8771-e501-4615-bfa7-570c03f4bef5',
+    },
+  },
+  MPI: {
+    title: {
+      _type: Type.String,
+      _default: 'MPI',
+    },
+    baseAPIPath: {
+      _type: Type.String,
+      _default: '/ws/fhir2/R4/MPIPatient',
+    },
+    preferredPatientIdentifierTitle: {
+      _type: Type.String,
+      _default: 'Health ID',
+    },
+    preferredPatientIdentifierType: {
+      _type: Type.String,
+      _default: 'ac79a22f-4783-498d-80d8-d0523f6f91d2',
     },
   },
   defaultPatientIdentifierTypes: {

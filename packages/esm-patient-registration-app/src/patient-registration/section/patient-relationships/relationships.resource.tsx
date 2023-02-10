@@ -9,7 +9,7 @@ export function useInitialPatientRelationships(patientUuid: string): {
   isLoading: boolean;
 } {
   const shouldFetch = !!patientUuid;
-  const { data, error, isLoading } = useSWR<FetchResponse<RelationshipsResponse>, Error>(
+  const { data, error } = useSWR<FetchResponse<RelationshipsResponse>, Error>(
     shouldFetch ? `/ws/rest/v1/relationship?v=${personRelationshipRepresentation}&person=${patientUuid}` : null,
     openmrsFetch,
   );
@@ -43,9 +43,9 @@ export function useInitialPatientRelationships(patientUuid: string): {
     return {
       data: relationships,
       error,
-      isLoading,
+      isLoading: !data && !error && shouldFetch,
     };
-  }, [patientUuid, data, error]);
+  }, [patientUuid, data, error, shouldFetch]);
 
   return result;
 }
